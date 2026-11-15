@@ -1,16 +1,19 @@
 use wayland_client::Connection;
 use wayland_client::Dispatch;
 use wayland_client::EventQueue;
-use wayland_client::Proxy;
-use wayland_client::QueueHandle;
+use wayland_client::globals::GlobalList;
+use wayland_client::globals::GlobalListContents;
+use wayland_client::globals::registry_queue_init;
+use wayland_client::protocol::wl_registry::WlRegistry;
 
-pub fn connect() {
+pub fn connect() -> Connection {
     let conn = Connection::connect_to_env().unwrap();
+    conn
+}
 
-    let (globals, mut event_queue) = registry_queue_init(&conn).unwrap();
-    let qh = event_queue.handle();
-
-    let compositor = CompositorState::bind(&globals, &qh).expect("wl_compositor is not available");
-
-    let layer_shell = LayerShell::bind(&globals, &qh).expect("layer shell is not available");
+fn spawn_queue<T: Dispatch<WlRegistry, GlobalListContents> + 'static>(
+    conn: &Connection,
+) -> (EventQueue<T>, GlobalList) {
+    let (globals, event_queue) = registry_queue_init(&conn).unwrap();
+    (event_queue, globals)
 }
